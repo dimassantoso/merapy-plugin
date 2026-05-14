@@ -13,12 +13,12 @@ Each subdirectory is an independent Python package that depends on `merapy` and 
 | [oracledb/](oracledb/) | `merapy-oracledb` | `oracledb-adaptor` | Oracle `SQLDatabase` via SQLAlchemy async | ✅ Implemented |
 | [tracer-otlp/](tracer-otlp/) | `merapy-tracer-otlp` | `tracer/sentrytracer` | OTLP gRPC/HTTP span exporter | ✅ Implemented |
 | [p2p/](p2p/) | `merapy-p2p` | `p2p` | Raw TCP/UDP `AppServerFactory` (asyncio) | ✅ Implemented |
-| [gcp-pubsub/](gcp-pubsub/) | `merapy-gcp-pubsub` | `gcppubsub` | GCP Pub/Sub `Broker` + subscriber worker | 🚧 Skeleton |
-| [stomp-broker/](stomp-broker/) | `merapy-stomp-broker` | `stomp-broker` | STOMP `Broker` + worker (ActiveMQ, RabbitMQ STOMP) | 🚧 Skeleton |
-| [sanic-rest/](sanic-rest/) | `merapy-sanic-rest` | `fiber-rest` | Sanic `RESTRouter` + `AppServerFactory` | 🚧 Skeleton |
-| [blacksheep-rest/](blacksheep-rest/) | `merapy-blacksheep-rest` | `echo-rest` | BlackSheep `RESTRouter` + `AppServerFactory` | 🚧 Skeleton |
-| [arangodb/](arangodb/) | `merapy-arangodb` | `arangodb-adapter` | ArangoDB document/graph database adapter | 🚧 Skeleton |
-| [task-queue-admin/](task-queue-admin/) | `merapy-task-queue-admin` | `task-queue-worker` | Mongo/Redis backends for task queue worker | 🚧 Skeleton |
+| [gcp-pubsub/](gcp-pubsub/) | `merapy-gcp-pubsub` | `gcppubsub` | GCP Pub/Sub `Broker` + subscriber worker | ✅ Implemented |
+| [stomp-broker/](stomp-broker/) | `merapy-stomp-broker` | `stomp-broker` | STOMP `Broker` + worker (ActiveMQ, RabbitMQ STOMP) | ✅ Implemented |
+| [sanic-rest/](sanic-rest/) | `merapy-sanic-rest` | `fiber-rest` | Sanic `RESTRouter` + `AppServerFactory` | ✅ Implemented |
+| [blacksheep-rest/](blacksheep-rest/) | `merapy-blacksheep-rest` | `echo-rest` | BlackSheep `RESTRouter` + `AppServerFactory` | ✅ Implemented |
+| [arangodb/](arangodb/) | `merapy-arangodb` | `arangodb-adapter` | ArangoDB document/graph database adapter | ✅ Implemented |
+| [task-queue-admin/](task-queue-admin/) | `merapy-task-queue-admin` | `task-queue-worker` | Mongo/Redis backends for task queue worker | ✅ Implemented |
 
 > **Note on SNS:** candi-plugin only has SQS. `merapy-aws-sqs-sns` adds SNS as a publish-only complement — SNS fan-out to SQS queues, Lambda, HTTP endpoints is configured in AWS; this plugin handles the publish side.
 
