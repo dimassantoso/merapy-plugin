@@ -27,7 +27,6 @@ Usage::
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
@@ -391,8 +390,13 @@ class TaskQueueAdminWorker:
         self._semaphore = asyncio.Semaphore(env.max_workers)
         self._collect_handlers()
 
-        # Serve the built-in dashboard (it reads from _worker_ref which we patch below)
-        # We create a minimal shim so the dashboard can query our store
+        # The built-in dashboard reads _worker_ref._handlers and _worker_ref._session_factory.
+        # We expose _handlers (already set) and set _session_factory=None so the dashboard
+        # falls back to its no-session path (task names visible, job queries return empty).
+        # The store provides the actual data — dashboard GraphQL queries are served via
+        # the dashboard's own _get_all_task_impl() which reads from _worker_ref._handlers.
+        self._session_factory = None  # dashboard checks for None gracefully
+
         dashboard = TaskQueueDashboard(self, port=env.task_queue_dashboard_port)  # type: ignore[arg-type]
         dashboard_task = asyncio.create_task(dashboard.serve(), name="task-queue-admin-dashboard")
 
