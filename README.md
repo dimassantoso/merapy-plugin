@@ -1,6 +1,6 @@
 # merapy-plugin
 
-Pluggable extensions for [merapy](https://github.com/santosodb/kapynis) — the Python clean-architecture microservice framework. Mirrors [candi-plugin](https://github.com/golangid/candi-plugin) for Go candi.
+Pluggable extensions for [merapy](https://github.com/santosodb/merapy) — the Python clean-architecture microservice framework. Mirrors [candi-plugin](https://github.com/golangid/candi-plugin) for Go candi.
 
 Each subdirectory is an independent Python package that depends on `merapy` and implements one of its Protocols (`AppServerFactory`, `Broker`, `SQLDatabase`, etc.) — drop the package into your service's dependencies, register it during boot, and you get an alternative implementation of an interface without touching framework code.
 
