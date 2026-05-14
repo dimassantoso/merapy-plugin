@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "merapy-p2p"
 version = "0.1.0"
-description = "libp2p-backed peer-to-peer AppServerFactory for merapy."
+description = "Raw TCP/UDP peer-to-peer AppServerFactory for merapy (asyncio, no libp2p)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

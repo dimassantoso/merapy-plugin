@@ -99,9 +99,9 @@ class P2PTCPServer:
         self._server: asyncio.Server | None = None
 
     def _collect_handlers(self) -> None:
-        from merapy.codebase.types import Server as SrvType
+        from merapy.codebase.types import Server
         for module in self._service.modules():
-            h = module.server_handler(SrvType("p2p_tcp"))  # type: ignore[arg-type]
+            h = module.server_handler(Server.P2P_TCP)
             if h is None:
                 continue
             group = HandlerGroup()
@@ -212,9 +212,9 @@ class P2PUDPServer:
         self._transport: asyncio.DatagramTransport | None = None
 
     def _collect_handlers(self) -> None:
-        from merapy.codebase.types import Server as SrvType
+        from merapy.codebase.types import Server
         for module in self._service.modules():
-            h = module.server_handler(SrvType("p2p_udp"))  # type: ignore[arg-type]
+            h = module.server_handler(Server.P2P_UDP)
             if h is None:
                 continue
             group = HandlerGroup()
@@ -236,16 +236,15 @@ class P2PUDPServer:
             port=self._port,
             handlers=list(self._handlers.keys()),
         )
-        # Keep running until shutdown
-        try:
-            await asyncio.get_event_loop().create_future()  # run forever
-        except asyncio.CancelledError:
-            pass
+        self._stop_event = asyncio.Event()
+        await self._stop_event.wait()
 
     async def shutdown(self) -> None:
         if self._transport is not None:
             self._transport.close()
-            logger.info("p2p_udp.stopped")
+        if hasattr(self, "_stop_event"):
+            self._stop_event.set()
+        logger.info("p2p_udp.stopped")
 
 
 __all__ = ["P2PTCPServer", "P2PUDPServer", "P2PContext", "HandlerGroup"]
