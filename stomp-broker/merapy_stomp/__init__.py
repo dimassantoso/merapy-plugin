@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-WORKER_TYPE = Worker("stomp_broker")
+WORKER_TYPE: Worker = Worker.STOMP
 
 # Header key injected on every published message (mirrors candi's StompEventID)
 _EVENT_ID_HEADER = "stomp-event-id"
@@ -47,7 +47,7 @@ class STOMPPublisher:
         ``args.message`` = raw bytes body.
         ``args.headers`` = STOMP frame headers.
         """
-        headers = dict(args.headers or {})
+        headers = dict(args.headers)
         headers.setdefault(_EVENT_ID_HEADER, str(uuid.uuid4()))
         headers.setdefault("content-type", "application/octet-stream")
 
