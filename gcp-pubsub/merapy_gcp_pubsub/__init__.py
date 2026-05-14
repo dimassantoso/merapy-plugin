@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-WORKER_TYPE = Worker("gcp_pubsub")
+WORKER_TYPE: Worker = Worker.GCP_PUBSUB
 
 
 # ---------------------------------------------------------------------------
@@ -44,11 +44,8 @@ class GCPPubSubPublisher:
         ``projects/my-project/topics/my-topic``, or just the topic name
         (the broker will prepend the project path).
         """
-        import asyncio
-        from google.cloud import pubsub_v1  # noqa: F401
-
         body = args.message if args.message else b""
-        attributes = {k: str(v) for k, v in (args.headers or {}).items()}
+        attributes = {k: str(v) for k, v in args.headers.items()}
         attributes.setdefault("merapy-event-id", str(uuid.uuid4()))
 
         loop = asyncio.get_running_loop()
