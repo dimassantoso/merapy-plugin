@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "merapy-aws-sqs"
+name = "merapy-aws-sqs-sns"
 version = "0.1.0"
-description = "AWS SQS broker + worker for merapy."
+description = "AWS SQS (broker + worker) and SNS (publisher) for merapy."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["merapy", "merapy-plugin", "aws", "sqs"]
+keywords = ["merapy", "merapy-plugin", "aws", "sqs", "sns"]
 dependencies = [
     "merapy>=0.1.0",
     "aioboto3>=13.0",

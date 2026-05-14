@@ -13,7 +13,6 @@ authors = [{ name = "Dimas Santoso" }]
 keywords = ["merapy", "merapy-plugin", "circuit-breaker", "resilience"]
 dependencies = [
     "merapy>=0.1.0",
-    "purgatory>=2.0",
 ]
 
 [tool.setuptools.packages.find]

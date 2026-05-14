@@ -13,7 +13,6 @@ authors = [{ name = "Dimas Santoso" }]
 keywords = ["merapy", "merapy-plugin", "p2p", "libp2p"]
 dependencies = [
     "merapy>=0.1.0",
-    "libp2p>=0.2",
 ]
 
 [tool.setuptools.packages.find]
