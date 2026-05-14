@@ -1,12 +1,12 @@
 """AWS SQS broker + worker, and SNS publisher for merapy.
 
 candi-plugin reference: candi-plugin/amazonsqs (SQS only — no SNS in candi).
-SNS is added here because it is the natural AWS fan-out complement to SQS.
+SNS is added here as the natural AWS fan-out complement to SQS.
 
 Roles
 -----
-SQSBroker   — implements merapy Broker Protocol (publisher = SQS, consumer via SQSWorker)
-SQSWorker   — AppServerFactory: polls SQS queues, dispatches to module handlers
+SQSBroker    — implements merapy Broker Protocol (publisher = SQS, consumer via SQSWorker)
+SQSWorker    — AppServerFactory: polls SQS queues, dispatches to module handlers
 SNSPublisher — standalone publisher that sends to SNS topics (ARN as topic)
 
 Usage
@@ -16,9 +16,7 @@ Usage
 
     # In load_service_configs:
     broker = SQSBroker(region="ap-southeast-1")
-    deps = DependencyBuilder()
-        .with_broker(Worker("amazonsqs"), broker)
-        .build()
+    deps = DependencyBuilder().with_broker(Worker.AMAZONSQS, broker).build()
 
     # In service applications:
     applications.append(SQSWorker(service, broker))
@@ -52,8 +50,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Worker type constant — mirrors candi's AmazonSQSBroker
-WORKER_TYPE = Worker("amazonsqs_broker")
+# Use the first-class enum value added to merapy core
+WORKER_TYPE: Worker = Worker.AMAZONSQS
 
 
 # ---------------------------------------------------------------------------
@@ -61,35 +59,51 @@ WORKER_TYPE = Worker("amazonsqs_broker")
 # ---------------------------------------------------------------------------
 
 class SQSPublisher:
-    """Publishes messages to an SQS queue URL via aioboto3."""
+    """Publishes messages to an SQS queue URL via aioboto3.
 
-    def __init__(self, session: Any) -> None:
+    Performance: reuses the aioboto3 session across calls; the context manager
+    opens/closes a single botocore client per ``publish_message`` call which is
+    the correct pattern for aioboto3 (clients are not thread-safe but are
+    coroutine-safe within a single task).
+    """
+
+    __slots__ = ("_session", "_endpoint_url")
+
+    def __init__(self, session: Any, endpoint_url: str | None = None) -> None:
         self._session = session
+        self._endpoint_url = endpoint_url
 
     async def publish_message(self, args: PublisherArgument) -> None:
         """Send a message to an SQS queue.
 
-        ``args.topic`` must be the full SQS queue URL.
-        ``args.message`` is the raw body bytes.
-        ``args.headers`` are sent as MessageAttributes (string type).
+        ``args.topic``   — full SQS queue URL.
+        ``args.message`` — raw bytes body.
+        ``args.key``     — optional deduplication / group ID (FIFO queues).
+        ``args.headers`` — sent as MessageAttributes (String type).
         """
         body = args.message.decode() if args.message else ""
         attributes: dict[str, Any] = {
             k: {"DataType": "String", "StringValue": v}
-            for k, v in (args.headers or {}).items()
+            for k, v in args.headers.items()
         }
-        # Inject a correlation ID for distributed tracing
-        attributes["merapy-event-id"] = {
+        attributes.setdefault("merapy-event-id", {
             "DataType": "String",
             "StringValue": str(uuid.uuid4()),
+        })
+
+        send_kwargs: dict[str, Any] = {
+            "QueueUrl": args.topic,
+            "MessageBody": body,
+            "MessageAttributes": attributes,
         }
-        async with self._session.client("sqs") as client:
-            await client.send_message(
-                QueueUrl=args.topic,
-                MessageBody=body,
-                MessageAttributes=attributes,
-            )
-            logger.debug("sqs.published", queue=args.topic, key=args.key)
+        # FIFO queue support
+        if args.key:
+            send_kwargs["MessageGroupId"] = args.key
+            send_kwargs["MessageDeduplicationId"] = args.key
+
+        async with self._session.client("sqs", endpoint_url=self._endpoint_url) as client:
+            await client.send_message(**send_kwargs)
+        logger.debug("sqs.published", queue=args.topic, key=args.key)
 
 
 # ---------------------------------------------------------------------------
@@ -99,11 +113,13 @@ class SQSPublisher:
 class SNSPublisher:
     """Publishes messages to an SNS topic ARN via aioboto3.
 
-    SNS is publish-only (fan-out). There is no consumer side — subscribers
-    are SQS queues, Lambda functions, HTTP endpoints, etc., configured in AWS.
+    SNS is publish-only (fan-out). Subscribers (SQS queues, Lambda, HTTP
+    endpoints) are configured in AWS — this plugin only handles the publish side.
 
     ``args.topic`` must be the full SNS topic ARN.
     """
+
+    __slots__ = ("_session", "_endpoint_url")
 
     def __init__(
         self,
@@ -115,8 +131,10 @@ class SNSPublisher:
     ) -> None:
         try:
             import aioboto3
-        except ImportError as e:
-            raise ImportError("merapy-aws-sqs-sns requires aioboto3: pip install aioboto3") from e
+        except ImportError as exc:
+            raise ImportError(
+                "merapy-aws-sqs-sns requires aioboto3: pip install aioboto3"
+            ) from exc
 
         self._session = aioboto3.Session(
             region_name=region,
@@ -128,22 +146,23 @@ class SNSPublisher:
     async def publish_message(self, args: PublisherArgument) -> None:
         """Publish to an SNS topic ARN.
 
-        ``args.topic`` = SNS topic ARN.
-        ``args.message`` = raw bytes payload.
-        ``args.headers`` = SNS MessageAttributes (string type).
+        ``args.topic``   — SNS topic ARN.
+        ``args.message`` — raw bytes payload.
+        ``args.headers`` — SNS MessageAttributes (String type).
         """
         body = args.message.decode() if args.message else ""
         attributes: dict[str, Any] = {
             k: {"DataType": "String", "StringValue": v}
-            for k, v in (args.headers or {}).items()
+            for k, v in args.headers.items()
         }
-        kwargs: dict[str, Any] = dict(TopicArn=args.topic, Message=body, MessageAttributes=attributes)
-        if self._endpoint_url:
-            kwargs["EndpointUrl"] = self._endpoint_url  # type: ignore[assignment]
 
         async with self._session.client("sns", endpoint_url=self._endpoint_url) as client:
-            resp = await client.publish(**{k: v for k, v in kwargs.items() if k != "EndpointUrl"})
-            logger.debug("sns.published", topic=args.topic, message_id=resp.get("MessageId"))
+            resp = await client.publish(
+                TopicArn=args.topic,
+                Message=body,
+                MessageAttributes=attributes,
+            )
+        logger.debug("sns.published", topic=args.topic, message_id=resp.get("MessageId"))
 
 
 # ---------------------------------------------------------------------------
@@ -151,9 +170,9 @@ class SNSPublisher:
 # ---------------------------------------------------------------------------
 
 class SQSBroker:
-    """merapy Broker implementation backed by AWS SQS.
+    """merapy Broker Protocol implementation backed by AWS SQS.
 
-    Registers under ``Worker("amazonsqs_broker")`` in the Dependency container.
+    Registers under ``Worker.AMAZONSQS`` in the Dependency container.
 
     Args:
         region: AWS region name.
@@ -161,6 +180,8 @@ class SQSBroker:
         aws_secret_access_key: Optional explicit credentials.
         endpoint_url: Override endpoint (e.g. LocalStack: ``http://localhost:4566``).
     """
+
+    __slots__ = ("_session", "_endpoint_url", "_publisher")
 
     def __init__(
         self,
@@ -172,8 +193,10 @@ class SQSBroker:
     ) -> None:
         try:
             import aioboto3
-        except ImportError as e:
-            raise ImportError("merapy-aws-sqs-sns requires aioboto3: pip install aioboto3") from e
+        except ImportError as exc:
+            raise ImportError(
+                "merapy-aws-sqs-sns requires aioboto3: pip install aioboto3"
+            ) from exc
 
         self._session = aioboto3.Session(
             region_name=region,
@@ -181,12 +204,12 @@ class SQSBroker:
             aws_secret_access_key=aws_secret_access_key,
         )
         self._endpoint_url = endpoint_url
-        self._publisher = SQSPublisher(self._session)
+        self._publisher = SQSPublisher(self._session, endpoint_url)
 
     def name(self) -> Worker:
         return WORKER_TYPE
 
-    def configuration(self) -> Any:
+    def configuration(self) -> dict[str, Any]:
         return {"type": "aws-sqs", "region": self._session.region_name}
 
     def publisher(self) -> SQSPublisher:
@@ -211,19 +234,29 @@ class SQSBroker:
 class SQSWorker:
     """AppServerFactory that polls SQS queues and dispatches to module handlers.
 
-    Each handler's ``pattern`` is the SQS queue URL (or queue name — the worker
-    resolves the URL via ``get_queue_url`` at startup).
+    Each handler's ``pattern`` is the SQS queue URL or queue name (resolved
+    to a URL via ``GetQueueUrl`` at startup).
+
+    Performance notes:
+    - Uses SQS long-polling (``wait_seconds=20``) to minimise empty-poll cost.
+    - All queues are polled concurrently via ``asyncio.gather`` each tick.
+    - A single aioboto3 client is reused for the lifetime of ``serve()``.
 
     Args:
         service: The merapy ServiceFactory.
         broker: An ``SQSBroker`` instance.
         max_messages: Max messages per ``receive_message`` call (1–10).
-        wait_seconds: Long-poll wait time in seconds (0–20). 20 is recommended.
+        wait_seconds: Long-poll wait time in seconds (0–20). 20 recommended.
         visibility_timeout: Seconds a message is hidden after receipt.
-        poll_interval: Seconds between polls when queue is empty.
+        poll_interval: Seconds between polls when all queues are empty.
     """
 
     name = "sqs-worker"
+
+    __slots__ = (
+        "_service", "_broker", "_max_messages", "_wait_seconds",
+        "_visibility_timeout", "_poll_interval", "_handlers", "_stop",
+    )
 
     def __init__(
         self,
@@ -246,32 +279,25 @@ class SQSWorker:
 
     def _collect_handlers(self) -> None:
         for module in self._service.modules():
-            h = module.worker_handler(WORKER_TYPE)
-            if h is None:
+            wh = module.worker_handler(WORKER_TYPE)
+            if wh is None:
                 continue
             group = WorkerHandlerGroup()
-            h.mount_handlers(group)
+            wh.mount_handlers(group)
             for entry in group.handlers:
                 self._handlers[entry.pattern] = entry
-                logger.info(
-                    "sqs_worker.registered",
-                    queue=entry.pattern,
-                    module=module.name,
-                )
+                logger.info("sqs_worker.registered", queue=entry.pattern, module=module.name)
 
-    async def _resolve_queue_urls(self) -> dict[str, str]:
-        """Resolve queue names to full URLs (no-op if already a URL)."""
+    async def _resolve_queue_urls(self, client: Any) -> dict[str, str]:
+        """Resolve queue names → full URLs. No-op if pattern is already a URL."""
         resolved: dict[str, str] = {}
-        async with self._broker._session.client(
-            "sqs", endpoint_url=self._broker._endpoint_url
-        ) as client:
-            for pattern in self._handlers:
-                if pattern.startswith("http"):
-                    resolved[pattern] = pattern
-                else:
-                    resp = await client.get_queue_url(QueueName=pattern)
-                    resolved[pattern] = resp["QueueUrl"]
-                    logger.info("sqs_worker.resolved", name=pattern, url=resolved[pattern])
+        for pattern in self._handlers:
+            if pattern.startswith("http"):
+                resolved[pattern] = pattern
+            else:
+                resp = await client.get_queue_url(QueueName=pattern)
+                resolved[pattern] = resp["QueueUrl"]
+                logger.info("sqs_worker.resolved", name=pattern, url=resolved[pattern])
         return resolved
 
     async def _poll_queue(
@@ -287,8 +313,7 @@ class SQSWorker:
             VisibilityTimeout=self._visibility_timeout,
             MessageAttributeNames=["All"],
         )
-        messages = resp.get("Messages", [])
-        for msg in messages:
+        for msg in resp.get("Messages", []):
             headers = {
                 k: v.get("StringValue", "")
                 for k, v in msg.get("MessageAttributes", {}).items()
@@ -317,24 +342,22 @@ class SQSWorker:
             await self._stop.wait()
             return
 
-        queue_urls = await self._resolve_queue_urls()
-        # Reverse map: url → entry
-        url_to_entry = {
-            url: self._handlers[pattern]
-            for pattern, url in queue_urls.items()
-        }
-
-        logger.info("sqs_worker.started", queues=list(url_to_entry.keys()))
-
+        # Single client for the lifetime of serve() — avoids per-poll overhead
         async with self._broker._session.client(
             "sqs", endpoint_url=self._broker._endpoint_url
         ) as client:
+            url_to_entry = {
+                url: self._handlers[pattern]
+                for pattern, url in (await self._resolve_queue_urls(client)).items()
+            }
+            logger.info("sqs_worker.started", queues=list(url_to_entry.keys()))
+
             while not self._stop.is_set():
-                tasks = [
-                    self._poll_queue(client, url, entry)
-                    for url, entry in url_to_entry.items()
-                ]
-                await asyncio.gather(*tasks, return_exceptions=True)
+                await asyncio.gather(
+                    *(self._poll_queue(client, url, entry)
+                      for url, entry in url_to_entry.items()),
+                    return_exceptions=True,
+                )
                 if not self._stop.is_set():
                     try:
                         await asyncio.wait_for(self._stop.wait(), timeout=self._poll_interval)
