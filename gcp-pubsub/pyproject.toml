@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-gcp-pubsub"
+version = "0.1.0"
+description = "Google Cloud Pub/Sub broker + worker for kapynis."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "gcp", "pubsub"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "google-cloud-pubsub>=2.23",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_gcp_pubsub*"]

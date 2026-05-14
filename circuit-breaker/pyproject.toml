@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-circuit-breaker"
+version = "0.1.0"
+description = "Circuit-breaker middleware / decorator for kapynis."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "circuit-breaker", "resilience"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "purgatory>=2.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_circuit_breaker*"]

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-oracledb"
+version = "0.1.0"
+description = "Oracle Database adapter for kapynis SQL layer."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "oracle", "sql"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "oracledb>=2.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_oracledb*"]

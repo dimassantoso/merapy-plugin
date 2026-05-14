@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-task-queue-admin"
+version = "0.1.0"
+description = "Enhanced task-queue with GraphQL admin UI for kapynis (mirrors candi's task_queue_worker)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "task-queue", "graphql"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "strawberry-graphql>=0.236",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_task_queue_admin*"]

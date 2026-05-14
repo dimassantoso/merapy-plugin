@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-aws-sqs"
+version = "0.1.0"
+description = "AWS SQS broker + worker for kapynis."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "aws", "sqs"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "aioboto3>=13.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_aws_sqs*"]

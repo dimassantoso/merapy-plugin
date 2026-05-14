@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kapynis-tracer-otlp"
+version = "0.1.0"
+description = "OTLP span exporter wiring for kapynis tracer."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dimas Santoso" }]
+keywords = ["kapynis", "kapynis-plugin", "opentelemetry", "otlp", "tracer"]
+dependencies = [
+    "kapynis>=0.1.0",
+    "opentelemetry-exporter-otlp>=1.27",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["merapy_tracer_otlp*"]
