@@ -97,8 +97,7 @@ def init_oracle_database(
     """
     try:
         import oracledb  # noqa: F401 — ensure driver is importable
-        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
     except ImportError as e:
         raise ImportError(
             "merapy-oracledb requires oracledb and sqlalchemy[asyncio]: "
@@ -126,8 +125,9 @@ def init_oracle_database(
         else write_engine
     )
 
-    factory = sessionmaker(  # type: ignore[call-overload]
-        bind=write_engine,
+    # SQLAlchemy 2.x async_sessionmaker — bound to write engine for mutations
+    factory = async_sessionmaker(
+        write_engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
