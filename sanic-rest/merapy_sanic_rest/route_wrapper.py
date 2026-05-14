@@ -2,10 +2,15 @@
 
 Wraps ``sanic.Blueprint`` to satisfy the ``RESTRouter`` interface so module
 REST handlers work unchanged regardless of the underlying HTTP framework.
+
+Blueprint hierarchy is built via ``Blueprint.group()`` — the correct Sanic API
+for nesting blueprints. Each ``group()`` call creates a child blueprint with a
+unique name (required by Sanic) and registers it under the parent.
 """
 
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING, Any
 
 from merapy.codebase.interfaces.rest_router import HTTPMiddleware, RouteHandler
@@ -18,12 +23,15 @@ class SanicRouteWrapper:
     """Concrete RESTRouter implementation over ``sanic.Blueprint``.
 
     Mirrors FastAPIRouteWrapper / LitestarRouteWrapper in merapy core.
+
+    Blueprint names must be globally unique within a Sanic app — we use a
+    short UUID suffix to guarantee uniqueness when ``group()`` is called
+    multiple times with the same prefix.
     """
 
-    def __init__(self, prefix: str = "", name: str = "root") -> None:
+    def __init__(self, prefix: str = "", name: str = "merapy_root") -> None:
         from sanic import Blueprint
-        # Blueprint names must be unique within an app
-        self._bp = Blueprint(name or "root", url_prefix=prefix or "/")
+        self._bp = Blueprint(name, url_prefix=prefix or "/")
         self._children: list[SanicRouteWrapper] = []
         self._middlewares: list[HTTPMiddleware] = []
 
@@ -31,8 +39,8 @@ class SanicRouteWrapper:
         self._middlewares.extend(middlewares)
 
     def group(self, pattern: str, *middlewares: HTTPMiddleware) -> "SanicRouteWrapper":
-        import uuid
-        child = SanicRouteWrapper(prefix=pattern, name=f"group_{uuid.uuid4().hex[:8]}")
+        child_name = f"bp_{uuid.uuid4().hex[:8]}"
+        child = SanicRouteWrapper(prefix=pattern, name=child_name)
         child._middlewares.extend(self._middlewares)
         child._middlewares.extend(middlewares)
         self._children.append(child)
@@ -45,7 +53,6 @@ class SanicRouteWrapper:
         handler: RouteHandler,
         *middlewares: HTTPMiddleware,
     ) -> None:
-        # Sanic uses add_route; middlewares become request middleware on the blueprint
         self._bp.add_route(handler, pattern, methods=[method.upper()])
 
     def get(self, pattern: str, handler: RouteHandler, *m: HTTPMiddleware) -> None:
@@ -69,13 +76,24 @@ class SanicRouteWrapper:
     def options(self, pattern: str, handler: RouteHandler, *m: HTTPMiddleware) -> None:
         self.handle("OPTIONS", pattern, handler, *m)
 
-    def finalize(self, app: "Sanic") -> None:
-        """Register this blueprint and all children onto the Sanic app."""
+    def _collect_blueprints(self) -> list[Any]:
+        """Return this blueprint and all children as a flat list for Blueprint.group()."""
+        from sanic import Blueprint
+        bps = [self._bp]
         for child in self._children:
-            child._mount_on_parent(self._bp)
-        app.blueprint(self._bp)
+            bps.extend(child._collect_blueprints())
+        return bps
 
-    def _mount_on_parent(self, parent: Any) -> None:
-        for child in self._children:
-            child._mount_on_parent(self._bp)
-        parent.blueprint(self._bp)
+    def finalize(self, app: "Sanic") -> None:
+        """Register this blueprint tree onto the Sanic app.
+
+        If there are children, use ``Blueprint.group()`` to nest them under
+        the root blueprint's url_prefix. Otherwise register directly.
+        """
+        from sanic import Blueprint
+        if self._children:
+            all_bps = [self._bp] + [c._bp for c in self._children]
+            group = Blueprint.group(*all_bps, url_prefix=self._bp.url_prefix or "/")
+            app.blueprint(group)
+        else:
+            app.blueprint(self._bp)
