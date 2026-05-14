@@ -1,4 +1,4 @@
-"""Circuit-breaker for kapynis. Skeleton."""
+"""Circuit-breaker for merapy. Skeleton."""
 
 from __future__ import annotations
 

@@ -3,16 +3,16 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kapynis-arangodb"
+name = "merapy-arangodb"
 version = "0.1.0"
-description = "ArangoDB adapter for kapynis — NoSQL/graph repository support."
+description = "ArangoDB adapter for merapy — NoSQL/graph repository support."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["kapynis", "kapynis-plugin", "arangodb", "nosql", "graph"]
+keywords = ["merapy", "merapy-plugin", "arangodb", "nosql", "graph"]
 dependencies = [
-    "kapynis>=0.1.0",
+    "merapy>=0.1.0",
     "python-arango>=8.0",
 ]
 

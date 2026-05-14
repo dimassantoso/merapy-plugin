@@ -1,6 +1,6 @@
-# kapynis-aws-sqs
+# merapy-aws-sqs
 
-AWS Simple Queue Service broker + worker for kapynis.
+AWS Simple Queue Service broker + worker for merapy.
 
 ## Status
 

@@ -1,15 +1,15 @@
-"""GCP Pub/Sub broker + worker for kapynis. Skeleton."""
+"""GCP Pub/Sub broker + worker for merapy. Skeleton."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from kapynis.codebase.factory.service_factory import ServiceFactory
+    from merapy.codebase.factory.service_factory import ServiceFactory
 
 
 class GCPPubSubBroker:
-    """Implements the kapynis `Broker` Protocol over Google Cloud Pub/Sub.
+    """Implements the merapy `Broker` Protocol over Google Cloud Pub/Sub.
 
     TODO: implement publisher() using ``google.cloud.pubsub_v1.PublisherClient``.
     """

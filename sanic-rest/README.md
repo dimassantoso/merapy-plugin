@@ -1,6 +1,6 @@
-# kapynis-sanic-rest
+# merapy-sanic-rest
 
-[Sanic](https://sanic.dev/) adapter for kapynis's `RESTRouter` — drop-in alternative to the built-in FastAPI / Litestar adapters.
+[Sanic](https://sanic.dev/) adapter for merapy's `RESTRouter` — drop-in alternative to the built-in FastAPI / Litestar adapters.
 
 ## Why
 
@@ -9,7 +9,7 @@ Sanic is one of the fastest async Python web frameworks. Use this adapter when r
 ## Install
 
 ```bash
-pip install kapynis-sanic-rest
+pip install merapy-sanic-rest
 ```
 
 ## Use

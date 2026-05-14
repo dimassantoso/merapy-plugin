@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kapynis-sanic-rest"
+name = "merapy-sanic-rest"
 version = "0.1.0"
-description = "Sanic adapter for kapynis RESTRouter — alternative to the built-in FastAPI / Litestar adapters."
+description = "Sanic adapter for merapy RESTRouter — alternative to the built-in FastAPI / Litestar adapters."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["kapynis", "kapynis-plugin", "sanic", "rest"]
+keywords = ["merapy", "merapy-plugin", "sanic", "rest"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: AsyncIO",
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "kapynis>=0.1.0",
+    "merapy>=0.1.0",
     "sanic>=24.6",
 ]
 

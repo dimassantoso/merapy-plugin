@@ -1,10 +1,10 @@
-"""ArangoDB adapter for kapynis. Skeleton."""
+"""ArangoDB adapter for merapy. Skeleton."""
 
 from __future__ import annotations
 
 
 class ArangoDatabase:
-    """Async ArangoDB client wrapper exposing a kapynis-friendly surface.
+    """Async ArangoDB client wrapper exposing a merapy-friendly surface.
 
     TODO: implement read/write client split, health check, ``Closer`` impl.
     """

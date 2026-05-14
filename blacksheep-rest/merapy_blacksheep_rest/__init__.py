@@ -1,11 +1,11 @@
-"""BlackSheep `RESTRouter` + `AppServerFactory` for kapynis. Skeleton."""
+"""BlackSheep `RESTRouter` + `AppServerFactory` for merapy. Skeleton."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from kapynis.codebase.factory.service_factory import ServiceFactory
+    from merapy.codebase.factory.service_factory import ServiceFactory
 
 
 class BlackSheepRESTServer:

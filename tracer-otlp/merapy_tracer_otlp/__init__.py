@@ -1,4 +1,4 @@
-"""OTLP exporter for kapynis tracer. Skeleton."""
+"""OTLP exporter for merapy tracer. Skeleton."""
 
 from __future__ import annotations
 

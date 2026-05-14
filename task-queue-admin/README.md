@@ -1,6 +1,6 @@
-# kapynis-task-queue-admin
+# merapy-task-queue-admin
 
-Enhanced task-queue worker with GraphQL admin UI for kapynis. Builds on the minimal `TaskQueueWorker` shipped in the framework core (poll-based, retry, persistent) and adds:
+Enhanced task-queue worker with GraphQL admin UI for merapy. Builds on the minimal `TaskQueueWorker` shipped in the framework core (poll-based, retry, persistent) and adds:
 
 - GraphQL endpoint for listing / requeueing / cancelling jobs.
 - Mongo + Redis storage backends (core ships SQL only).

@@ -1,8 +1,8 @@
-# kapynis-plugin
+# merapy-plugin
 
-Pluggable extensions for [kapynis](https://github.com/santosodb/kapynis) — the Python clean-architecture microservice framework. Mirrors [candi-plugin](https://github.com/golangid/candi-plugin) for Go candi.
+Pluggable extensions for [merapy](https://github.com/santosodb/kapynis) — the Python clean-architecture microservice framework. Mirrors [candi-plugin](https://github.com/golangid/candi-plugin) for Go candi.
 
-Each subdirectory is an independent Python package that depends on `kapynis` and implements one of its Protocols (`AppServerFactory`, `Broker`, `SQLDatabase`, etc.) — drop the package into your service's dependencies, register it during boot, and you get an alternative implementation of an interface without touching framework code.
+Each subdirectory is an independent Python package that depends on `merapy` and implements one of its Protocols (`AppServerFactory`, `Broker`, `SQLDatabase`, etc.) — drop the package into your service's dependencies, register it during boot, and you get an alternative implementation of an interface without touching framework code.
 
 ## Plugins
 
@@ -27,7 +27,7 @@ All plugins are **skeleton** at this stage — pyproject + README + a stub class
 ```bash
 pip install ./sanic-rest          # local / editable
 # once published to PyPI:
-pip install kapynis-sanic-rest
+pip install merapy-sanic-rest
 ```
 
 ## Use one
@@ -38,7 +38,7 @@ from merapy_sanic_rest import SanicRESTServer
 applications.append(SanicRESTServer(service=service))
 ```
 
-The kapynis framework only sees the Protocol it expects — the concrete plugin slots in transparently.
+The merapy framework only sees the Protocol it expects — the concrete plugin slots in transparently.
 
 ## Author a new plugin
 
@@ -46,13 +46,13 @@ Minimal layout:
 
 ```
 my-plugin/
-├── pyproject.toml           # depends on `kapynis`
+├── pyproject.toml           # depends on `merapy`
 ├── README.md
 └── merapy_my_plugin/
-    └── __init__.py          # exports an adapter implementing a kapynis Protocol
+    └── __init__.py          # exports an adapter implementing a merapy Protocol
 ```
 
-Pick one of the kapynis Protocols (`kapynis.codebase.factory.app_factory.AppServerFactory`, `kapynis.codebase.interfaces.broker.Broker`, etc.) and provide a class that satisfies it structurally. Register the instance during your service's `load_service_configs` and you're done.
+Pick one of the merapy Protocols (`merapy.codebase.factory.app_factory.AppServerFactory`, `merapy.codebase.interfaces.broker.Broker`, etc.) and provide a class that satisfies it structurally. Register the instance during your service's `load_service_configs` and you're done.
 
 ## License
 

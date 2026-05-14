@@ -1,4 +1,4 @@
-"""Oracle DB adapter for kapynis SQL layer. Skeleton."""
+"""Oracle DB adapter for merapy SQL layer. Skeleton."""
 
 from __future__ import annotations
 

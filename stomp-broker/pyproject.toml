@@ -3,16 +3,16 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kapynis-stomp-broker"
+name = "merapy-stomp-broker"
 version = "0.1.0"
-description = "STOMP protocol broker + worker for kapynis (ActiveMQ, RabbitMQ STOMP plugin, etc.)."
+description = "STOMP protocol broker + worker for merapy (ActiveMQ, RabbitMQ STOMP plugin, etc.)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["kapynis", "kapynis-plugin", "stomp", "activemq"]
+keywords = ["merapy", "merapy-plugin", "stomp", "activemq"]
 dependencies = [
-    "kapynis>=0.1.0",
+    "merapy>=0.1.0",
     "aiostomp>=3.0",
 ]
 

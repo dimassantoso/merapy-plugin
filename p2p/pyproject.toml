@@ -3,16 +3,16 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kapynis-p2p"
+name = "merapy-p2p"
 version = "0.1.0"
-description = "libp2p-backed peer-to-peer AppServerFactory for kapynis."
+description = "libp2p-backed peer-to-peer AppServerFactory for merapy."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["kapynis", "kapynis-plugin", "p2p", "libp2p"]
+keywords = ["merapy", "merapy-plugin", "p2p", "libp2p"]
 dependencies = [
-    "kapynis>=0.1.0",
+    "merapy>=0.1.0",
     "libp2p>=0.2",
 ]
 

@@ -3,14 +3,14 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kapynis-blacksheep-rest"
+name = "merapy-blacksheep-rest"
 version = "0.1.0"
-description = "BlackSheep adapter for kapynis RESTRouter — alternative to FastAPI / Litestar."
+description = "BlackSheep adapter for merapy RESTRouter — alternative to FastAPI / Litestar."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dimas Santoso" }]
-keywords = ["kapynis", "kapynis-plugin", "blacksheep", "rest"]
+keywords = ["merapy", "merapy-plugin", "blacksheep", "rest"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: AsyncIO",
@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "kapynis>=0.1.0",
+    "merapy>=0.1.0",
     "blacksheep>=2.0",
 ]
 

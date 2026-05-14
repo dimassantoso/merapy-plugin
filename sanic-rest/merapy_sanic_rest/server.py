@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from kapynis.codebase.factory.service_factory import ServiceFactory
+    from merapy.codebase.factory.service_factory import ServiceFactory
 
 
 class SanicRESTServer:
-    """Sanic implementation of kapynis's REST `AppServerFactory`.
+    """Sanic implementation of merapy's REST `AppServerFactory`.
 
     Mirrors the pattern of `candi-plugin/fiber-rest` for Go candi:
     a separately installable package providing an alternative HTTP engine
@@ -18,7 +18,7 @@ class SanicRESTServer:
     Implementation TODO:
       1. Build a `Sanic` app, mount middleware (CORS / tracer / log).
       2. Wrap `sanic.Blueprint` as `RESTRouter` (analogous to `route_wrapper.py`
-         in `kapynis/codebase/app/rest_server/`).
+         in `merapy/codebase/app/rest_server/`).
       3. Iterate `service.modules()` and call `module.rest_handler().mount(router)`.
       4. Run via `Sanic.serve()` in `serve()` and `app.stop()` in `shutdown()`.
     """

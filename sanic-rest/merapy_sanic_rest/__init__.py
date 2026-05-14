@@ -1,4 +1,4 @@
-"""Sanic adapter for kapynis's RESTRouter / AppServerFactory.
+"""Sanic adapter for merapy's RESTRouter / AppServerFactory.
 
 Skeleton — full implementation pending.
 """
