@@ -3,16 +3,20 @@
 Mirrors candi-plugin/echo-rest: alternative HTTP engine behind the same
 RESTRouter Protocol. Module handlers work unchanged.
 
+BlackSheep 2.x uses a Router that accumulates route definitions. Routes are
+registered on the Application's router directly — we store (method, path,
+handler) tuples and flush them onto the app router in finalize().
+
 Exports:
     BlackSheepRESTServer   — AppServerFactory running BlackSheep under uvicorn
-    BlackSheepRouteWrapper — RESTRouter implementation over blacksheep.Router
+    BlackSheepRouteWrapper — RESTRouter implementation for blacksheep 2.x
 """
 
 from __future__ import annotations
 
 import asyncio
 import logging
-import uuid
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from merapy.codebase.interfaces.rest_router import HTTPMiddleware, RouteHandler
@@ -27,21 +31,30 @@ logger = logging.getLogger(__name__)
 # Route wrapper
 # ---------------------------------------------------------------------------
 
-class BlackSheepRouteWrapper:
-    """Concrete RESTRouter implementation over ``blacksheep.Router``.
+@dataclass
+class _RouteSpec:
+    method: str
+    path: str
+    handler: RouteHandler
 
-    Mirrors FastAPIRouteWrapper / LitestarRouteWrapper in merapy core.
+
+class BlackSheepRouteWrapper:
+    """Concrete RESTRouter implementation for BlackSheep 2.x.
+
+    Accumulates route specs and flushes them onto the BlackSheep Application
+    router in ``finalize()``. This avoids iterating the router object (which
+    is not a public API) and works correctly with nested groups.
     """
 
     def __init__(self, prefix: str = "") -> None:
-        from blacksheep import Router
-        self._router = Router()
         self._prefix = prefix.rstrip("/")
+        self._routes: list[_RouteSpec] = []
         self._children: list[BlackSheepRouteWrapper] = []
         self._middlewares: list[HTTPMiddleware] = []
 
     def _full(self, pattern: str) -> str:
-        return self._prefix + pattern
+        p = self._prefix + pattern
+        return p or "/"
 
     def use(self, *middlewares: HTTPMiddleware) -> None:
         self._middlewares.extend(middlewares)
@@ -60,7 +73,7 @@ class BlackSheepRouteWrapper:
         handler: RouteHandler,
         *middlewares: HTTPMiddleware,
     ) -> None:
-        self._router.add_route(method.upper(), self._full(pattern), handler)
+        self._routes.append(_RouteSpec(method.upper(), self._full(pattern), handler))
 
     def get(self, p: str, h: RouteHandler, *m: HTTPMiddleware) -> None:
         self.handle("GET", p, h, *m)
@@ -84,18 +97,14 @@ class BlackSheepRouteWrapper:
         self.handle("OPTIONS", p, h, *m)
 
     def finalize(self, app: Any) -> None:
-        """Register all routes (including children) onto the BlackSheep Application."""
-        for child in self._children:
-            child._register_on(self._router)
-        # Mount our router onto the app
-        for route in self._router:
-            app.router.add_route(route.method, route.pattern, route.handler)
+        """Flush all accumulated routes (including children) onto the app router."""
+        self._flush(app.router)
 
-    def _register_on(self, parent_router: Any) -> None:
+    def _flush(self, router: Any) -> None:
+        for spec in self._routes:
+            router.add_route(spec.method, spec.path, spec.handler)
         for child in self._children:
-            child._register_on(self._router)
-        for route in self._router:
-            parent_router.add_route(route.method, route.pattern, route.handler)
+            child._flush(router)
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +112,10 @@ class BlackSheepRouteWrapper:
 # ---------------------------------------------------------------------------
 
 class BlackSheepRESTServer:
-    """AppServerFactory running BlackSheep under uvicorn.
+    """AppServerFactory running BlackSheep under uvicorn (ASGI).
 
     Drop-in replacement for merapy's built-in FastAPI / Litestar REST servers.
+    Runs under uvicorn — same as the core adapters.
 
     Args:
         service: merapy ServiceFactory.
@@ -116,24 +126,22 @@ class BlackSheepRESTServer:
     def __init__(self, service: "ServiceFactory") -> None:
         try:
             import blacksheep  # noqa: F401
-        except ImportError as e:
+        except ImportError as exc:
             raise ImportError(
                 "merapy-blacksheep-rest requires blacksheep: pip install blacksheep"
-            ) from e
+            ) from exc
 
         self._service = service
         self._app = self._build()
         self._server: Any = None
 
     def _build(self) -> Any:
-        from blacksheep import Application
-        from blacksheep.server.responses import json as bs_json
+        from blacksheep import Application, json as bs_json, Request
 
         env = self._service.config().env
         app = Application(show_error_details=env.debug_mode)
 
-        # CORS
-        from blacksheep.server.cors import CORSPolicy
+        # CORS — blacksheep 2.x uses use_cors()
         app.use_cors(
             allow_methods=" ".join(env.cors_allow_methods),
             allow_origins=" ".join(env.cors_allow_origins),
@@ -142,7 +150,7 @@ class BlackSheepRESTServer:
 
         # Health endpoint
         @app.router.get(env.http_root_path or "/")
-        async def _health(request: Any) -> Any:
+        async def _health(request: Request) -> Any:
             return bs_json({
                 "service": env.service_name,
                 "environment": env.environment,
